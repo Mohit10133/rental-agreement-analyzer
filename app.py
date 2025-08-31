@@ -34,7 +34,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(DATA_FOLDER, exist_ok=True)
 
 # Initialize Gemini API
-GEMINI_API_KEY = "AIzaSyCuYxsYkfHhJ-9OPWVUjsEmuFELdv639f8"
+#GEMINI_API_KEY = #Your gemini api key
 genai.configure(api_key=GEMINI_API_KEY)
 
 # Download required NLTK data
