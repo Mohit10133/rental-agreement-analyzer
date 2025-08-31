@@ -1,0 +1,50 @@
+# SafeLeaseX Project - Git Ignore File
+# Only tracking essential source code and documentation
+
+# Virtual Environment
+.venv/
+
+# IDE and Editor Files
+.vscode/
+
+# User Data and Runtime Files
+uploads/
+data/
+*.pkl
+
+# Documentation Files (excluding from Git)
+CLAUSE_EXTRACTION_SUMMARY.md
+COMPLETE_PROJECT_ANALYSIS.md
+QUICK_START.md
+VIVA_PREPARATION_GUIDE.md
+IMPROVEMENTS_SUMMARY.md
+IMAGE_OCR_IMPLEMENTATION.md
+
+# Debug and Setup Files
+debug_clauses.py
+setup.py
+
+# Python Cache and Compiled Files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Log Files
+*.log
+
+# Temporary Files
+*.tmp
+*.temp
+
+# OS Generated Files
+.DS_Store
+Thumbs.db
+
+# Backup Files
+*.bak
+
+# User Uploaded Documents
+*.pdf
+*.docx
+*.doc

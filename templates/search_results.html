@@ -1,0 +1,525 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results - Legal Document Analyzer{% endblock %}
+
+{% block styles %}
+<style>
+.search-highlight {
+    background-color: #ffeb3b !important;
+    color: #000000 !important;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: bold;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    text-shadow: none !important;
+}
+
+.match-context {
+    line-height: 1.6;
+    font-size: 0.95em;
+    word-break: break-word;
+    white-space: pre-wrap;
+    color: #ffffff !important;
+}
+
+.position-info {
+    font-size: 0.85em;
+    color: #6c757d;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-search me-2"></i>Search Results</h2>
+    <a href="{{ url_for('search') }}" class="btn btn-primary">
+        <i class="fas fa-search me-1"></i>New Search
+    </a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">
+            Search Query: <span class="text-primary">"{{ query }}"</span>
+        </h5>
+        <p class="card-text">
+            Found <strong>{{ total_matches }}</strong> matches across <strong>{{ results|length }}</strong> document(s).
+        </p>
+        
+        <!-- Spell Check Suggestions -->
+        {% if spell_suggestions %}
+        <div class="alert alert-info mt-3">
+            <h6 class="mb-2"><i class="fas fa-spell-check me-2"></i>Did you mean:</h6>
+            {% for suggestion in spell_suggestions %}
+            <div class="mb-2">
+                <strong>"{{ suggestion.original }}"</strong> → 
+                {% for corrected_word in suggestion.suggestions %}
+                <button class="btn btn-sm btn-outline-primary me-1 spell-suggestion" 
+                        data-original="{{ suggestion.original }}" 
+                        data-correction="{{ corrected_word }}">
+                    {{ corrected_word }}
+                </button>
+                {% endfor %}
+            </div>
+            {% endfor %}
+            <div class="mt-2">
+                <button class="btn btn-sm btn-success" id="applyAllSuggestions">
+                    <i class="fas fa-magic me-1"></i>Apply All Suggestions
+                </button>
+                <button class="btn btn-sm btn-secondary" id="dismissSuggestions">
+                    <i class="fas fa-times me-1"></i>Dismiss
+                </button>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Search again form -->
+        <form method="POST" class="mt-3">
+            <div class="input-group">
+                <input type="text" class="form-control" name="query" value="{{ query }}" 
+                       placeholder="Refine your search..." id="searchInput">
+                <button class="btn btn-outline-primary" type="submit">
+                    <i class="fas fa-search me-1"></i>Search Again
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if results %}
+    <!-- Search Navigation -->
+    <div class="card mb-4 search-navigation">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h6 class="mb-0">Navigate through matches:</h6>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="prevMatch">
+                            <i class="fas fa-chevron-up me-1"></i>Previous
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="nextMatch">
+                            <i class="fas fa-chevron-down me-1"></i>Next
+                        </button>
+                    </div>
+                    <span class="ms-3 text-muted" id="matchCounter">Match 1 of {{ total_matches }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% for result in results %}
+    <div class="card mb-4 document-result" data-doc-index="{{ result.doc_index }}">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-file-pdf me-2"></i>{{ result.document.filename }}
+            </h5>
+            <div>
+                <span class="badge bg-primary me-2">{{ result.match_count }} matches</span>
+                <a href="{{ url_for('view_document_clauses', doc_index=result.doc_index) }}" 
+                   class="btn btn-sm btn-outline-info">
+                    <i class="fas fa-list-ol me-1"></i>View Clauses
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <small class="text-muted">Word Count:</small> {{ result.document.word_count }}<br>
+                    <small class="text-muted">Upload Date:</small> {{ result.document.upload_time[:10] }}
+                </div>
+                <div class="col-md-6">
+                    {% if result.document.parties.lessor %}
+                        <small class="text-muted">Lessor:</small> {{ result.document.parties.lessor[0].name }}<br>
+                    {% endif %}
+                    {% if result.document.parties.lessee %}
+                        <small class="text-muted">Lessee:</small> {{ result.document.parties.lessee[0].name }}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="search-matches-container">
+                <h6 class="text-primary mb-3">
+                    <i class="fas fa-search-plus me-1"></i>Search Matches ({{ result.match_count }})
+                </h6>
+                
+                {% for match in result.matches[:5] %}
+                <div class="search-match border-start border-primary border-3 ps-3 mb-3" data-match="{{ match.match_number }}">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <small class="text-muted">
+                            <i class="fas fa-map-marker-alt me-1"></i>Match {{ match.match_number }} of {{ match.total_matches }}
+                            | Page ~{{ match.page_estimate }}
+                        </small>
+                        <button class="btn btn-sm btn-outline-secondary copy-text" 
+                                data-text="{{ match.context|striptags }}">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    <div class="search-context match-context mb-2 p-3 bg-light rounded border-start border-primary border-3">{{ match.context|safe }}</div>
+                </div>
+                {% endfor %}
+                
+                {% if result.match_count > 5 %}
+                <div class="text-center mt-3">
+                    <button class="btn btn-outline-primary btn-sm show-more-matches" 
+                            data-doc-index="{{ result.doc_index }}">
+                        <i class="fas fa-plus me-1"></i>Show {{ result.match_count - 5 }} more matches
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-search fa-4x text-muted mb-3"></i>
+        <h4 class="text-muted">No results found</h4>
+        <p class="text-muted mb-4">Try different search terms or check your spelling.</p>
+        <a href="{{ url_for('search') }}" class="btn btn-primary">
+            <i class="fas fa-search me-2"></i>Try Another Search
+        </a>
+    </div>
+{% endif %}
+
+<!-- Export Results Button -->
+{% if results %}
+<div class="text-center mt-4" 
+     data-query="{{ query|e }}" 
+     data-total-matches="{{ total_matches }}" 
+     data-doc-count="{{ results|length }}">
+    <button class="btn btn-success" onclick="exportResults()">
+        <i class="fas fa-download me-1"></i>Export Search Results
+    </button>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentMatch = 0;
+let totalMatches = parseInt('{{ total_matches|default(0) }}');
+let allMatches = [];
+let searchQuery = '{{ query|e }}';
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    initializeMatches();
+    initializeNavigation();
+    initializeCopyFunctionality();
+    initializeSpellSuggestions();
+});
+
+function initializeMatches() {
+    // Collect all matches for navigation
+    document.querySelectorAll('.search-match').forEach((match, index) => {
+        allMatches.push({
+            element: match,
+            number: parseInt(match.dataset.match),
+            docIndex: match.closest('.document-result').dataset.docIndex
+        });
+    });
+    
+    if (allMatches.length > 0) {
+        highlightCurrentMatch();
+    }
+}
+
+function initializeNavigation() {
+    const prevBtn = document.getElementById('prevMatch');
+    const nextBtn = document.getElementById('nextMatch');
+    
+    if (prevBtn && nextBtn) {
+        prevBtn.addEventListener('click', () => navigateMatch(-1));
+        nextBtn.addEventListener('click', () => navigateMatch(1));
+    }
+}
+
+function navigateMatch(direction) {
+    if (allMatches.length === 0) return;
+    
+    currentMatch += direction;
+    
+    if (currentMatch < 0) currentMatch = allMatches.length - 1;
+    if (currentMatch >= allMatches.length) currentMatch = 0;
+    
+    highlightCurrentMatch();
+    scrollToCurrentMatch();
+}
+
+function highlightCurrentMatch() {
+    // Remove previous highlights
+    document.querySelectorAll('.search-match').forEach(match => {
+        match.classList.remove('current-match');
+    });
+    
+    // Highlight current match
+    if (allMatches[currentMatch]) {
+        allMatches[currentMatch].element.classList.add('current-match');
+        updateMatchCounter();
+    }
+}
+
+function scrollToCurrentMatch() {
+    if (allMatches[currentMatch]) {
+        allMatches[currentMatch].element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+    }
+}
+
+function updateMatchCounter() {
+    const counter = document.getElementById('matchCounter');
+    if (counter) {
+        counter.textContent = `Match ${currentMatch + 1} of ${allMatches.length}`;
+    }
+}
+
+function initializeCopyFunctionality() {
+    document.querySelectorAll('.copy-text').forEach(button => {
+        button.addEventListener('click', function() {
+            const text = this.dataset.text;
+            navigator.clipboard.writeText(text).then(() => {
+                this.innerHTML = '<i class="fas fa-check"></i>';
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-copy"></i>';
+                }, 2000);
+            });
+        });
+    });
+}
+
+function initializeSpellSuggestions() {
+    // Handle individual spell suggestions
+    document.querySelectorAll('.spell-suggestion').forEach(button => {
+        button.addEventListener('click', function() {
+            const original = this.dataset.original;
+            const correction = this.dataset.correction;
+            const searchInput = document.getElementById('searchInput');
+            
+            if (searchInput) {
+                let currentQuery = searchInput.value;
+                let newQuery = currentQuery.replace(new RegExp(`\\b${escapeRegex(original)}\\b`, 'gi'), correction);
+                searchInput.value = newQuery;
+                
+                // Highlight the applied suggestion
+                this.classList.remove('btn-outline-primary');
+                this.classList.add('btn-success');
+                this.innerHTML = `<i class="fas fa-check me-1"></i>${correction}`;
+            }
+        });
+    });
+    
+    // Apply all suggestions
+    const applyAllBtn = document.getElementById('applyAllSuggestions');
+    if (applyAllBtn) {
+        applyAllBtn.addEventListener('click', function() {
+            const searchInput = document.getElementById('searchInput');
+            if (!searchInput) return;
+            
+            let newQuery = searchInput.value;
+            
+            // Apply each suggestion
+            document.querySelectorAll('.spell-suggestion').forEach(button => {
+                const original = button.dataset.original;
+                const correction = button.dataset.correction;
+                
+                // Use the first suggestion for each word
+                if (button.parentNode.querySelector('.spell-suggestion') === button) {
+                    newQuery = newQuery.replace(new RegExp(`\\b${escapeRegex(original)}\\b`, 'gi'), correction);
+                }
+            });
+            
+            searchInput.value = newQuery;
+            
+            // Hide suggestions
+            const alertDiv = document.querySelector('.alert-info');
+            if (alertDiv) {
+                alertDiv.style.display = 'none';
+            }
+        });
+    }
+    
+    // Dismiss suggestions
+    const dismissBtn = document.getElementById('dismissSuggestions');
+    if (dismissBtn) {
+        dismissBtn.addEventListener('click', function() {
+            const alertDiv = document.querySelector('.alert-info');
+            if (alertDiv) {
+                alertDiv.style.display = 'none';
+            }
+        });
+    }
+}
+
+// Show more matches functionality
+document.querySelectorAll('.show-more-matches').forEach(button => {
+    button.addEventListener('click', function() {
+        const docIndex = this.dataset.docIndex;
+        // This would typically load more matches via AJAX
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Loading...';
+        this.disabled = true;
+        
+        // Placeholder - in a real implementation, you'd fetch more matches
+        setTimeout(() => {
+            this.style.display = 'none';
+            const notice = document.createElement('div');
+            notice.className = 'alert alert-info';
+            notice.innerHTML = '<i class="fas fa-info-circle me-1"></i>Go to Documents page to see complete analysis with all matches.';
+            this.parentNode.replaceChild(notice, this);
+        }, 1000);
+    });
+});
+
+// Export results functionality
+function exportResults() {
+    const totalMatches = parseInt('{{ total_matches|default(0) }}');
+    const docCount = parseInt('{{ results|length|default(0) }}');
+    
+    let exportText = `Legal Document Search Results\n`;
+    exportText += `===============================\n\n`;
+    exportText += `Search Query: "${searchQuery}"\n`;
+    exportText += `Generated on: ${new Date().toLocaleString()}\n`;
+    exportText += `Total matches: ${totalMatches}\n`;
+    exportText += `Documents searched: ${docCount}\n\n`;
+    
+    // Extract results from the page
+    const resultCards = document.querySelectorAll('.document-result');
+    resultCards.forEach((card, index) => {
+        const filename = card.querySelector('h5').textContent.trim().replace(/^\s*📄\s*/, '');
+        const matchCount = card.querySelector('.badge').textContent.trim();
+        
+        exportText += `Document ${index + 1}: ${filename}\n`;
+        exportText += `${'='.repeat(filename.length + 15)}\n`;
+        exportText += `Matches found: ${matchCount}\n\n`;
+        
+        const matches = card.querySelectorAll('.search-context');
+        matches.forEach((match, matchIndex) => {
+            const context = match.textContent.trim();
+            exportText += `Match ${matchIndex + 1}:\n${context}\n\n`;
+        });
+        
+        exportText += `\n`;
+    });
+    
+    // Download the file
+    const blob = new Blob([exportText], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `search_results_${searchQuery.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+// Utility function to escape regex
+function escapeRegex(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+            case 'ArrowUp':
+                e.preventDefault();
+                navigateMatch(-1);
+                break;
+            case 'ArrowDown':
+                e.preventDefault();
+                navigateMatch(1);
+                break;
+        }
+    }
+});
+</script>
+
+<style>
+.current-match {
+    background-color: rgba(74, 158, 255, 0.1);
+    border-left-color: var(--accent-blue) !important;
+    border-left-width: 4px !important;
+}
+
+.search-highlight {
+    background-color: yellow;
+    color: black;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+
+.search-highlight-full {
+    background-color: #ffeb3b;
+    color: #333;
+    padding: 2px 4px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.search-highlight-full:hover {
+    background-color: #ffc107;
+    transform: scale(1.05);
+}
+
+.active-highlight {
+    background-color: #ff5722 !important;
+    color: white !important;
+    box-shadow: 0 0 0 2px rgba(255, 87, 34, 0.3);
+}
+
+.document-text {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: var(--text-primary);
+    background: transparent;
+    border: none;
+    margin: 0;
+}
+
+.search-navigation {
+    position: sticky;
+    top: 80px;
+    z-index: 100;
+}
+
+@media (max-width: 768px) {
+    .search-navigation {
+        position: relative;
+        top: auto;
+    }
+}
+</style>
+{% endblock %}
+            matches.forEach((match, matchIndex) => {
+                const positionElement = match.parentElement.querySelector('small');
+                const position = positionElement ? positionElement.textContent.replace('Position: ', '') : 'Unknown';
+                exportText += `Match ${matchIndex + 1} (${position}):\n`;
+                exportText += `${match.textContent.trim()}\n\n`;
+            });
+            
+            exportText += '\n';
+        }
+    });
+    
+    // Create and download file
+    const blob = new Blob([exportText], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `search_results_${query.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+</script>
+{% endblock %}

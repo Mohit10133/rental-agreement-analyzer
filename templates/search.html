@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}Search Documents - SafeLeaseX{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <h2 class="text-center mb-4"><i class="fas fa-search me-2"></i>Search Documents</h2>
+        
+        <div class="card shadow">
+            <div class="card-body">
+                <form method="POST" id="searchForm">
+                    <div class="input-group input-group-lg">
+                        <input type="text" class="form-control" name="query" id="searchQuery" 
+                               placeholder="Enter search terms..." required autocomplete="off">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fas fa-search me-1"></i>Search
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Real-time Spell Suggestions -->
+                <div id="spellSuggestions" class="mt-3" style="display: none;">
+                    <div class="alert alert-warning">
+                        <h6 class="mb-2"><i class="fas fa-spell-check me-2"></i>Did you mean:</h6>
+                        <div id="suggestionsList"></div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-lightbulb me-1"></i>
+                        <strong>Search Tips:</strong> 
+                        Search for specific terms like "rent", "deposit", "lessor", "lessee", dates, names, or any text within your documents.
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Search Results -->
+        <div id="liveSearchResults" class="mt-4"></div>
+        
+        <!-- Common Search Terms -->
+        <div class="mt-4">
+            <h5>Common Search Terms</h5>
+            <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-outline-secondary btn-sm search-suggestion" data-term="rent">Rent</button>
+                <button class="btn btn-outline-secondary btn-sm search-suggestion" data-term="deposit">Security Deposit</button>
+                <button class="btn btn-outline-secondary btn-sm search-suggestion" data-term="lessor">Lessor</button>
+                <button class="btn btn-outline-secondary btn-sm search-suggestion" data-term="lessee">Lessee</button>
+                <button class="btn btn-outline-secondary btn-sm search-suggestion" data-term="agreement">Agreement</button>
+                <button class="btn btn-outline-secondary btn-sm search-suggestion" data-term="termination">Termination</button>
+                <button class="btn btn-outline-secondary btn-sm search-suggestion" data-term="maintenance">Maintenance</button>
+                <button class="btn btn-outline-secondary btn-sm search-suggestion" data-term="notice">Notice</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let searchTimeout;
+let spellCheckTimeout;
+
+// Live search functionality with spell checking
+document.getElementById('searchQuery').addEventListener('input', function(e) {
+    const query = e.target.value.trim();
+    
+    clearTimeout(searchTimeout);
+    clearTimeout(spellCheckTimeout);
+    
+    if (query.length < 2) {
+        document.getElementById('liveSearchResults').innerHTML = '';
+        document.getElementById('spellSuggestions').style.display = 'none';
+        return;
+    }
+    
+    // Real-time spell checking for words >= 3 characters
+    if (query.length >= 3) {
+        spellCheckTimeout = setTimeout(() => {
+            checkSpelling(query);
+        }, 500);
+    }
+    
+    // Live search
+    searchTimeout = setTimeout(() => {
+        fetch(`/api/search?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                displayLiveResults(data, query);
+            })
+            .catch(error => {
+                console.error('Search error:', error);
+            });
+    }, 300);
+});
+
+function checkSpelling(query) {
+    fetch(`/api/spell-check?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.has_suggestions) {
+                displaySpellSuggestions(data.suggestions);
+            } else {
+                document.getElementById('spellSuggestions').style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Spell check error:', error);
+        });
+}
+
+function displaySpellSuggestions(suggestions) {
+    const spellSuggestionsDiv = document.getElementById('spellSuggestions');
+    const suggestionsList = document.getElementById('suggestionsList');
+    
+    let html = '';
+    
+    suggestions.forEach(suggestion => {
+        html += `<div class="mb-2">`;
+        html += `<strong>"${suggestion.original}"</strong> → `;
+        
+        suggestion.suggestions.forEach(corrected => {
+            html += `<button class="btn btn-sm btn-outline-primary me-1 spell-suggestion" 
+                            data-original="${suggestion.original}" 
+                            data-correction="${corrected}">
+                        ${corrected}
+                    </button>`;
+        });
+        
+        html += `</div>`;
+    });
+    
+    html += `<div class="mt-2">
+                <button class="btn btn-sm btn-success" id="applyAllSuggestions">
+                    <i class="fas fa-magic me-1"></i>Apply All Suggestions
+                </button>
+                <button class="btn btn-sm btn-secondary" id="dismissSuggestions">
+                    <i class="fas fa-times me-1"></i>Dismiss
+                </button>
+            </div>`;
+    
+    suggestionsList.innerHTML = html;
+    spellSuggestionsDiv.style.display = 'block';
+    
+    // Add event listeners to new suggestion buttons
+    initializeSpellSuggestionHandlers();
+}
+
+function initializeSpellSuggestionHandlers() {
+    // Handle individual suggestions
+    document.querySelectorAll('.spell-suggestion').forEach(button => {
+        button.addEventListener('click', function() {
+            const original = this.dataset.original;
+            const correction = this.dataset.correction;
+            const searchInput = document.getElementById('searchQuery');
+            
+            let currentQuery = searchInput.value;
+            let newQuery = currentQuery.replace(new RegExp(`\\b${escapeRegex(original)}\\b`, 'gi'), correction);
+            searchInput.value = newQuery;
+            
+            // Trigger search with corrected query
+            searchInput.dispatchEvent(new Event('input'));
+            
+            // Highlight applied suggestion
+            this.classList.remove('btn-outline-primary');
+            this.classList.add('btn-success');
+            this.innerHTML = `<i class="fas fa-check me-1"></i>${correction}`;
+        });
+    });
+    
+    // Apply all suggestions
+    const applyAllBtn = document.getElementById('applyAllSuggestions');
+    if (applyAllBtn) {
+        applyAllBtn.addEventListener('click', function() {
+            const searchInput = document.getElementById('searchQuery');
+            let newQuery = searchInput.value;
+            
+            // Apply first suggestion for each misspelled word
+            const suggestions = {};
+            document.querySelectorAll('.spell-suggestion').forEach(button => {
+                const original = button.dataset.original;
+                const correction = button.dataset.correction;
+                
+                if (!suggestions[original]) {
+                    suggestions[original] = correction;
+                }
+            });
+            
+            Object.keys(suggestions).forEach(original => {
+                newQuery = newQuery.replace(new RegExp(`\\b${escapeRegex(original)}\\b`, 'gi'), suggestions[original]);
+            });
+            
+            searchInput.value = newQuery;
+            searchInput.dispatchEvent(new Event('input'));
+            document.getElementById('spellSuggestions').style.display = 'none';
+        });
+    }
+    
+    // Dismiss suggestions
+    const dismissBtn = document.getElementById('dismissSuggestions');
+    if (dismissBtn) {
+        dismissBtn.addEventListener('click', function() {
+            document.getElementById('spellSuggestions').style.display = 'none';
+        });
+    }
+}
+
+function escapeRegex(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function displayLiveResults(results, query) {
+    const container = document.getElementById('liveSearchResults');
+    
+    if (results.length === 0) {
+        container.innerHTML = `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>No results found for "${query}".
+            </div>
+        `;
+        return;
+    }
+    
+    let html = `
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-search-plus me-2"></i>
+                    Search Results for "${query}" (${results.reduce((total, r) => total + r.matches.length, 0)} matches)
+                </h5>
+            </div>
+            <div class="card-body">
+    `;
+    
+    results.forEach(result => {
+        html += `
+            <div class="mb-4">
+                <h6 class="text-primary">
+                    <i class="fas fa-file-pdf me-1"></i>
+                    ${result.document_name}
+                    <span class="badge bg-primary ms-2">${result.matches.length} matches</span>
+                </h6>
+                <div class="ms-3">
+        `;
+        
+        result.matches.forEach(match => {
+            html += `
+                <div class="border-start border-primary border-3 ps-3 mb-2">
+                    <small class="text-muted">Position: ${match.position}</small>
+                    <p class="mb-0">${match.context}</p>
+                </div>
+            `;
+        });
+        
+        html += `
+                    <a href="/document/${result.doc_index}" class="btn btn-sm btn-outline-primary mt-2">
+                        <i class="fas fa-eye me-1"></i>View Full Document
+                    </a>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div></div>';
+    container.innerHTML = html;
+}
+
+// Search suggestions
+document.querySelectorAll('.search-suggestion').forEach(button => {
+    button.addEventListener('click', function() {
+        const term = this.dataset.term;
+        document.getElementById('searchQuery').value = term;
+        document.getElementById('searchQuery').dispatchEvent(new Event('input'));
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,467 @@
+{% extends "base.html" %}
+
+{% block title %}Documents - SafeLeaseX{% endblock %}
+
+{% block content %}
+<div class="documents-header mb-5">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h2 class="text-primary mb-2">
+                <i class="fas fa-file-alt me-2"></i>
+                Analyzed Documents
+            </h2>
+            <p class="text-muted">AI-powered analysis of your legal documents</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Upload New
+                </a>
+                <a href="{{ url_for('search') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-search me-1"></i>Search
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if documents %}
+    <!-- Filter and Sort Controls -->
+    <div class="controls-section mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body py-3">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-filter"></i>
+                            </span>
+                            <input type="text" class="form-control" id="documentFilter" placeholder="Filter documents by name...">
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-md-end mt-2 mt-md-0">
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Sort options">
+                            <input type="radio" class="btn-check" name="sortOption" id="sortName" value="name" checked>
+                            <label class="btn btn-outline-secondary" for="sortName">
+                                <i class="fas fa-sort-alpha-down me-1"></i>Name
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="sortOption" id="sortDate" value="date">
+                            <label class="btn btn-outline-secondary" for="sortDate">
+                                <i class="fas fa-sort-numeric-down me-1"></i>Date
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="sortOption" id="sortSize" value="size">
+                            <label class="btn btn-outline-secondary" for="sortSize">
+                                <i class="fas fa-sort-amount-down me-1"></i>Size
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Documents Grid -->
+    <div class="row" id="documentsGrid">
+        {% for doc in documents %}
+        <div class="col-lg-6 mb-4 document-card" data-name="{{ doc.filename.lower() }}" data-date="{{ doc.upload_time }}" data-size="{{ doc.file_size or 0 }}">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-gradient-primary text-white position-relative">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <h5 class="mb-1">
+                                <i class="fas fa-file-pdf me-2"></i>
+                                <span class="document-name">{{ doc.filename }}</span>
+                            </h5>
+                            <small class="opacity-75">
+                                <i class="fas fa-clock me-1"></i>
+                                Uploaded {{ doc.upload_time[:10] }}
+                            </small>
+                        </div>
+                        <div class="document-status">
+                            <span class="badge bg-success">
+                                <i class="fas fa-check-circle me-1"></i>Analyzed
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Quick Stats -->
+                    <div class="row mb-3 text-center">
+                        <div class="col-4">
+                            <div class="stat-box">
+                                <div class="stat-value text-primary">{{ doc.word_count }}</div>
+                                <div class="stat-label">Words</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-box">
+                                <div class="stat-value text-success">{{ doc.dates.dates|length if doc.dates and doc.dates.dates else 0 }}</div>
+                                <div class="stat-label">Dates</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-box">
+                                <div class="stat-value text-info">{{ (doc.parties.lessor|length + doc.parties.lessee|length) if doc.parties else 0 }}</div>
+                                <div class="stat-label">Parties</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Key Information Preview -->
+                    <div class="document-preview">
+                        <!-- Parties -->
+                        {% if doc.parties and (doc.parties.lessor or doc.parties.lessee) %}
+                        <div class="mb-3">
+                            <h6 class="text-primary mb-2">
+                                <i class="fas fa-users me-1"></i>Parties
+                            </h6>
+                            <div class="d-flex flex-wrap gap-1">
+                                {% if doc.parties.lessor %}
+                                    {% for lessor in doc.parties.lessor[:2] %}
+                                        <span class="badge bg-success-subtle text-success">
+                                            <i class="fas fa-user-tie me-1"></i>{{ lessor.name }}
+                                        </span>
+                                    {% endfor %}
+                                {% endif %}
+                                {% if doc.parties.lessee %}
+                                    {% for lessee in doc.parties.lessee[:2] %}
+                                        <span class="badge bg-info-subtle text-info">
+                                            <i class="fas fa-user me-1"></i>{{ lessee.name }}
+                                        </span>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Important Dates -->
+                        {% if doc.dates and doc.dates.dates %}
+                        <div class="mb-3">
+                            <h6 class="text-primary mb-2">
+                                <i class="fas fa-calendar-alt me-1"></i>Key Dates
+                            </h6>
+                            <div class="d-flex flex-wrap gap-1">
+                                {% for date in doc.dates.dates[:3] %}
+                                    <span class="badge bg-warning-subtle text-warning">
+                                        {{ date.significance }}: {{ date.date }}
+                                    </span>
+                                {% endfor %}
+                                {% if doc.dates.dates|length > 3 %}
+                                    <span class="badge bg-secondary">+{{ doc.dates.dates|length - 3 }} more</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Financial Information -->
+                        {% if doc.key_terms and doc.key_terms.rent %}
+                        <div class="mb-3">
+                            <h6 class="text-primary mb-2">
+                                <i class="fas fa-dollar-sign me-1"></i>Financial
+                            </h6>
+                            <span class="badge bg-primary-subtle text-primary">
+                                Rent: {{ doc.key_terms.rent.amount }} ({{ doc.key_terms.rent.frequency }})
+                            </span>
+                            {% if doc.key_terms.deposit %}
+                                <span class="badge bg-warning-subtle text-warning ms-1">
+                                    Deposit: {{ doc.key_terms.deposit.amount }}
+                                </span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('document_detail', doc_index=loop.index0) }}" class="btn btn-outline-primary">
+                            <i class="fas fa-eye me-1"></i>View Full Analysis
+                        </a>
+                        <button type="button" 
+                                class="btn btn-danger btn-sm remove-doc-btn" 
+                                data-doc-index="{{ loop.index0 }}" 
+                                data-filename="{{ doc.filename|e }}">
+                            <i class="fas fa-trash me-1"></i>Remove Document
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Progress Indicator -->
+                <div class="card-footer bg-transparent border-0 pt-0">
+                    <div class="progress" style="height: 3px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
+                    </div>
+                    <small class="text-muted d-block text-center mt-1">Analysis Complete</small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="statistics-section mt-5">
+        <div class="card border-0 shadow">
+            <div class="card-header bg-gradient-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Analysis Summary
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3 col-6">
+                        <div class="summary-stat">
+                            <div class="stat-icon">
+                                <i class="fas fa-file-alt fa-2x text-primary"></i>
+                            </div>
+                            <h3 class="text-primary mb-1">{{ documents|length }}</h3>
+                            <p class="text-muted mb-0">Documents</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="summary-stat">
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar-alt fa-2x text-success"></i>
+                            </div>
+                            <h3 class="text-success mb-1">
+                                {% set total_dates = 0 %}
+                                {% for doc in documents %}
+                                    {% if doc.dates and doc.dates.dates %}
+                                        {% set total_dates = total_dates + doc.dates.dates|length %}
+                                    {% endif %}
+                                {% endfor %}
+                                {{ total_dates }}
+                            </h3>
+                            <p class="text-muted mb-0">Important Dates</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="summary-stat">
+                            <div class="stat-icon">
+                                <i class="fas fa-users fa-2x text-info"></i>
+                            </div>
+                            <h3 class="text-info mb-1">
+                                {% set total_parties = 0 %}
+                                {% for doc in documents %}
+                                    {% if doc.parties %}
+                                        {% set total_parties = total_parties + (doc.parties.lessor|length if doc.parties.lessor else 0) + (doc.parties.lessee|length if doc.parties.lessee else 0) %}
+                                    {% endif %}
+                                {% endfor %}
+                                {{ total_parties }}
+                            </h3>
+                            <p class="text-muted mb-0">Parties</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="summary-stat">
+                            <div class="stat-icon">
+                                <i class="fas fa-align-left fa-2x text-warning"></i>
+                            </div>
+                            <h3 class="text-warning mb-1">{{ documents|sum(attribute='word_count')|int }}</h3>
+                            <p class="text-muted mb-0">Total Words</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    <!-- Empty State -->
+    <div class="empty-state text-center py-5">
+        <div class="empty-state-content">
+            <div class="empty-state-icon mb-4">
+                <i class="fas fa-file-upload fa-4x text-muted opacity-50"></i>
+            </div>
+            <h3 class="text-muted mb-3">No documents uploaded yet</h3>
+            <p class="text-muted mb-4 lead">Upload your first legal document to get started with AI-powered analysis.</p>
+            <div class="empty-state-actions">
+                <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg me-3">
+                    <i class="fas fa-upload me-2"></i>Upload Documents
+                </a>
+                <a href="#" class="btn btn-outline-secondary btn-lg" data-bs-toggle="modal" data-bs-target="#helpModal">
+                    <i class="fas fa-question-circle me-2"></i>Need Help?
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal fade" id="helpModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-info-circle me-2"></i>How to Get Started
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Step 1: Upload Documents</h6>
+                            <p>Upload your PDF legal documents using the upload page. You can drag and drop multiple files at once.</p>
+                            
+                            <h6 class="text-primary">Step 2: AI Analysis</h6>
+                            <p>Our AI will automatically extract important information like dates, parties, and key terms.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Step 3: Review Results</h6>
+                            <p>View the analyzed documents with extracted information clearly organized.</p>
+                            
+                            <h6 class="text-primary">Step 4: Search & Export</h6>
+                            <p>Use the search feature to find specific terms and export your results.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="{{ url_for('index') }}" class="btn btn-primary">
+                        <i class="fas fa-upload me-1"></i>Start Uploading
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDocumentFiltering();
+    initializeDocumentSorting();
+    initializeRemoveButtons();
+});
+
+function initializeRemoveButtons() {
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-doc-btn')) {
+            const button = e.target.closest('.remove-doc-btn');
+            const docIndex = button.getAttribute('data-doc-index');
+            const filename = button.getAttribute('data-filename');
+            removeDocument(docIndex, filename);
+        }
+    });
+}
+
+function initializeDocumentFiltering() {
+    const filterInput = document.getElementById('documentFilter');
+    if (!filterInput) return;
+    
+    filterInput.addEventListener('input', function() {
+        const filterValue = this.value.toLowerCase();
+        const documentCards = document.querySelectorAll('.document-card');
+        
+        documentCards.forEach(card => {
+            const documentName = card.dataset.name;
+            if (documentName.includes(filterValue)) {
+                card.style.display = 'block';
+                card.classList.add('fade-in');
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+}
+
+function initializeDocumentSorting() {
+    const sortButtons = document.querySelectorAll('input[name="sortOption"]');
+    
+    sortButtons.forEach(button => {
+        button.addEventListener('change', function() {
+            sortDocuments(this.value);
+        });
+    });
+}
+
+function sortDocuments(sortBy) {
+    const grid = document.getElementById('documentsGrid');
+    const cards = Array.from(grid.children);
+    
+    cards.sort((a, b) => {
+        let valueA, valueB;
+        
+        switch(sortBy) {
+            case 'name':
+                valueA = a.dataset.name;
+                valueB = b.dataset.name;
+                return valueA.localeCompare(valueB);
+                
+            case 'date':
+                valueA = new Date(a.dataset.date);
+                valueB = new Date(b.dataset.date);
+                return valueB - valueA; // Newest first
+                
+            case 'size':
+                valueA = parseInt(a.dataset.size) || 0;
+                valueB = parseInt(b.dataset.size) || 0;
+                return valueB - valueA; // Largest first
+                
+            default:
+                return 0;
+        }
+    });
+    
+    // Re-append sorted cards
+    cards.forEach(card => {
+        grid.appendChild(card);
+        card.classList.add('fade-in');
+    });
+}
+
+// Format file sizes
+function formatFileSize(bytes) {
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    if (bytes === 0) return '0 Bytes';
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+// Remove document function
+function removeDocument(docIndex, filename) {
+    if (confirm(`Are you sure you want to remove "${filename}"? This action cannot be undone.`)) {
+        fetch(`/remove_document/${docIndex}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                showAlert('Document removed successfully!', 'success');
+                // Reload the page to update the document list
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showAlert('Error removing document: ' + data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('An error occurred while removing the document.', 'danger');
+        });
+    }
+}
+
+// Show alert function
+function showAlert(message, type) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // Insert alert at the top of the main content
+    const mainContent = document.querySelector('main .container');
+    if (mainContent) {
+        mainContent.insertAdjacentHTML('afterbegin', alertHtml);
+    }
+}
+</script>
+{% endblock %}

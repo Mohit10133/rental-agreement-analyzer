@@ -1,0 +1,704 @@
+{% extends "base.html" %}
+
+{% block title %}SafeLeaseX - Agreement Improvement{% endblock %}
+
+{% block content %}
+<div class="suggestions-header mb-5">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-5 mb-3">
+                    <i class="fas fa-balance-scale me-3"></i>
+                    Agreement Improvement Suggestions
+                </h1>
+                <p class="lead mb-0">Analyze your rental agreements and get AI-powered suggestions for missing or incomplete clauses to strengthen your legal protection.</p>
+            </div>
+            <div class="col-lg-4 text-center">
+                <div class="suggestion-icon">
+                    <i class="fas fa-balance-scale fa-5x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+
+{% if documents %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Document Selection -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-alt me-2"></i>
+                    Select Document for Analysis
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">Choose a rental agreement to analyze for missing clauses and improvement suggestions.</p>
+                <div class="row" id="documentSelection">
+                    {% for doc in documents %}
+                    <div class="col-md-6 mb-3">
+                        <div class="document-card" onclick="selectDocument({{ loop.index0 }})">
+                            <div class="card border-2 h-100 document-select-card" id="doc-card-{{ loop.index0 }}">
+                                <div class="card-body text-center p-3">
+                                    <i class="fas fa-file-pdf fa-3x text-danger mb-2"></i>
+                                    <h6 class="card-title text-truncate">{{ doc.filename }}</h6>
+                                    <div class="document-stats">
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>{{ doc.upload_time[:10] }}
+                                        </small><br>
+                                        <small class="text-muted">
+                                            <i class="fas fa-file-word me-1"></i>{{ doc.word_count or 0 }} words
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="mt-3">
+                    <button class="btn btn-primary" id="analyzeBtn" onclick="analyzeDocument()" disabled>
+                        <i class="fas fa-search me-1"></i>Analyze for Missing Clauses
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analysis Results -->
+        <div id="analysisResults" style="display: none;">
+            <!-- Results will be loaded here -->
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Information Panel -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    How It Works
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="suggestion-step mb-3">
+                    <div class="d-flex align-items-start">
+                        <div class="step-number me-3">
+                            <span class="badge bg-primary rounded-circle">1</span>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Select Document</h6>
+                            <small class="text-muted">Choose a rental agreement from your uploaded documents.</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="suggestion-step mb-3">
+                    <div class="d-flex align-items-start">
+                        <div class="step-number me-3">
+                            <span class="badge bg-primary rounded-circle">2</span>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">AI Analysis</h6>
+                            <small class="text-muted">Our system compares your agreement against comprehensive legal standards.</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="suggestion-step mb-3">
+                    <div class="d-flex align-items-start">
+                        <div class="step-number me-3">
+                            <span class="badge bg-primary rounded-circle">3</span>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Get Suggestions</h6>
+                            <small class="text-muted">Receive prioritized recommendations for missing or incomplete clauses.</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="suggestion-step">
+                    <div class="d-flex align-items-start">
+                        <div class="step-number me-3">
+                            <span class="badge bg-primary rounded-circle">4</span>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Improve Agreement</h6>
+                            <small class="text-muted">Use our suggested clauses to strengthen your legal protection.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Common Missing Clauses -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Commonly Missing Clauses
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="common-clause mb-2">
+                    <i class="fas fa-bolt text-warning me-2"></i>
+                    <small>Electricity Bill Responsibility</small>
+                </div>
+                <div class="common-clause mb-2">
+                    <i class="fas fa-tools text-info me-2"></i>
+                    <small>Maintenance and Repair Terms</small>
+                </div>
+                <div class="common-clause mb-2">
+                    <i class="fas fa-clock text-danger me-2"></i>
+                    <small>Notice Period for Termination</small>
+                </div>
+                <div class="common-clause mb-2">
+                    <i class="fas fa-shield-alt text-success me-2"></i>
+                    <small>Security Deposit Conditions</small>
+                </div>
+                <div class="common-clause mb-2">
+                    <i class="fas fa-paw text-secondary me-2"></i>
+                    <small>Pet Policy and Restrictions</small>
+                </div>
+                <div class="common-clause">
+                    <i class="fas fa-car text-primary me-2"></i>
+                    <small>Parking Space Allocation</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+{% else %}
+<div class="container-fluid">
+<div class="empty-state text-center py-5">
+    <div class="empty-icon mb-4">
+        <i class="fas fa-file-upload fa-4x text-muted opacity-50"></i>
+    </div>
+    <h3 class="text-muted mb-3">No Documents Available</h3>
+    <p class="text-muted mb-4">Upload rental agreements to get improvement suggestions and analyze missing clauses.</p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary">
+        <i class="fas fa-upload me-2"></i>Upload Documents
+    </a>
+</div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let selectedDocumentIndex = null;
+
+function selectDocument(index) {
+    // Remove previous selection
+    document.querySelectorAll('.document-select-card').forEach(card => {
+        card.classList.remove('border-primary', 'border-3');
+        card.classList.add('border-2');
+    });
+    
+    // Add selection to clicked document
+    const selectedCard = document.getElementById(`doc-card-${index}`);
+    selectedCard.classList.add('border-primary', 'border-3');
+    selectedCard.classList.remove('border-2');
+    
+    selectedDocumentIndex = index;
+    document.getElementById('analyzeBtn').disabled = false;
+}
+
+function analyzeDocument() {
+    if (selectedDocumentIndex === null) return;
+    
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const originalText = analyzeBtn.innerHTML;
+    
+    // Show loading state
+    analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Analyzing...';
+    analyzeBtn.disabled = true;
+    
+    // Make API call to analyze document
+    fetch(`/api/analyze-agreement/${selectedDocumentIndex}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        displayAnalysisResults(data);
+        analyzeBtn.innerHTML = originalText;
+        analyzeBtn.disabled = false;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        analyzeBtn.innerHTML = originalText;
+        analyzeBtn.disabled = false;
+        showError('Failed to analyze document. Please try again.');
+    });
+}
+
+function displayAnalysisResults(data) {
+    const resultsDiv = document.getElementById('analysisResults');
+    
+    // Start with quality assessment
+    let resultsHTML = '';
+    
+    if (data.quality) {
+        resultsHTML += `
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-${data.quality.color} text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Agreement Quality Assessment
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="text-${data.quality.color} mb-2">
+                                <i class="fas fa-${data.quality.rating === 'Excellent' ? 'star' : 
+                                                data.quality.rating === 'Good' ? 'thumbs-up' : 
+                                                data.quality.rating === 'Okay' ? 'meh' : 'exclamation-triangle'} me-2"></i>
+                                ${data.quality.rating}
+                            </h4>
+                            <p class="mb-3">${data.quality.description}</p>
+                            <div class="quality-stats">
+                                <small class="text-muted">
+                                    <strong>Coverage Score:</strong> ${data.quality.coverage_score}% • 
+                                    <strong>Missing High Priority:</strong> ${data.quality.missing_high} • 
+                                    <strong>Missing Medium Priority:</strong> ${data.quality.missing_medium}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="quality-score">
+                                <div class="circular-progress" style="background: conic-gradient(var(--bs-${data.quality.color}) ${data.quality.coverage_score * 3.6}deg, #e9ecef 0deg);">
+                                    <div class="inner-circle">
+                                        <span class="score-text">${data.quality.coverage_score}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    if (!data.suggestions || data.suggestions.length === 0) {
+        resultsHTML += `
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <h5 class="text-success">Perfect Agreement!</h5>
+                    <p class="text-muted">Your rental agreement appears to be comprehensive with all essential clauses covered.</p>
+                </div>
+            </div>
+        `;
+    } else {
+        resultsHTML += `
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        Improvement Suggestions (${data.suggestions.length})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">Based on our comprehensive analysis, here are suggestions to strengthen your rental agreement:</p>
+        `;
+        
+        data.suggestions.forEach((suggestion, index) => {
+            const priorityClass = suggestion.priority === 'high' ? 'danger' : 
+                                suggestion.priority === 'medium' ? 'warning' : 'info';
+            const priorityIcon = suggestion.priority === 'high' ? 'exclamation-circle' : 
+                               suggestion.priority === 'medium' ? 'exclamation-triangle' : 'info-circle';
+            const priorityBg = suggestion.priority === 'high' ? 'rgba(220, 53, 69, 0.1)' : 
+                             suggestion.priority === 'medium' ? 'rgba(255, 193, 7, 0.1)' : 'rgba(13, 202, 240, 0.1)';
+            
+            resultsHTML += `
+                <div class="suggestion-card mb-4" style="background: ${priorityBg}; border: 1px solid var(--bs-${priorityClass}); border-radius: 12px;">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-start">
+                            <div class="suggestion-priority me-3">
+                                <span class="badge bg-${priorityClass} priority-badge">
+                                    <i class="fas fa-${priorityIcon} me-1"></i>
+                                    ${suggestion.priority.toUpperCase()}
+                                </span>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="suggestion-title mb-2" style="color: var(--bs-${priorityClass}); font-weight: 600;">
+                                    ${suggestion.title}
+                                </h5>
+                                <p class="suggestion-description mb-3" style="color: #495057; font-size: 0.95rem; line-height: 1.5;">
+                                    ${suggestion.description}
+                                </p>
+                                <div class="suggested-clause">
+                                    <div class="clause-header mb-3">
+                                        <h6 class="mb-0" style="color: #0d6efd; font-weight: 600;">
+                                            <i class="fas fa-quote-left me-2"></i>Recommended Legal Clause
+                                        </h6>
+                                    </div>
+                                    <div class="clause-content">
+                                        <div class="clause-text-box p-4 mb-3" style="background: white; border: 2px solid #e9ecef; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                                            <div class="clause-text" style="color: #212529; font-size: 0.95rem; line-height: 1.7; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                                                "${suggestion.suggested_text}"
+                                            </div>
+                                        </div>
+                                        <div class="clause-actions">
+                                            <button class="btn btn-outline-primary btn-sm copy-btn" onclick="copyToClipboard('${suggestion.suggested_text.replace(/'/g, "\\'")}')">
+                                                <i class="fas fa-copy me-1"></i>Copy Clause
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        resultsHTML += `
+                </div>
+            </div>
+        `;
+    }
+    
+    resultsDiv.innerHTML = resultsHTML;
+    resultsDiv.style.display = 'block';
+    resultsDiv.scrollIntoView({ behavior: 'smooth' });
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        // Show temporary success message
+        const event = new CustomEvent('showToast', {
+            detail: { message: 'Clause copied to clipboard!', type: 'success' }
+        });
+        document.dispatchEvent(event);
+    });
+}
+
+function showError(message) {
+    const event = new CustomEvent('showToast', {
+        detail: { message: message, type: 'error' }
+    });
+    document.dispatchEvent(event);
+}
+
+// Add document card hover effects
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.document-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.querySelector('.card').style.transform = 'translateY(-5px)';
+            this.querySelector('.card').style.transition = 'transform 0.2s';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.querySelector('.card').style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
+
+<style>
+.document-select-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 12px;
+}
+
+.document-select-card:hover {
+    box-shadow: 0 8px 25px rgba(0,123,255,0.15);
+    transform: translateY(-2px);
+}
+
+.suggestion-step {
+    position: relative;
+}
+
+.suggestion-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 35px;
+    width: 2px;
+    height: 20px;
+    background: #dee2e6;
+}
+
+.step-number .badge {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+.common-clause {
+    padding: 8px 0;
+    border-bottom: 1px solid #f8f9fa;
+    transition: all 0.2s ease;
+}
+
+.common-clause:hover {
+    color: #0d6efd;
+    transform: translateX(5px);
+}
+
+.common-clause:last-child {
+    border-bottom: none;
+}
+
+.suggestion-card {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.suggestion-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.priority-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+}
+
+.clause-text-box {
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.clause-text-box:hover {
+    border-color: #0d6efd;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.1);
+}
+
+.clause-text {
+    font-style: italic;
+    position: relative;
+}
+
+.clause-text::before {
+    content: '"';
+    font-size: 2rem;
+    color: #0d6efd;
+    position: absolute;
+    left: -15px;
+    top: -10px;
+    font-family: Georgia, serif;
+    opacity: 0.3;
+}
+
+.clause-text::after {
+    content: '"';
+    font-size: 2rem;
+    color: #0d6efd;
+    position: absolute;
+    right: -10px;
+    bottom: -20px;
+    font-family: Georgia, serif;
+    opacity: 0.3;
+}
+
+.copy-btn {
+    border-radius: 20px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-width: 2px;
+}
+
+.copy-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+}
+
+.empty-state {
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.circular-progress {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: #f8f9fa;
+}
+
+.inner-circle {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.score-text {
+    font-weight: 700;
+    font-size: 16px;
+    color: #333;
+}
+
+.quality-score {
+    margin: 0 auto;
+}
+
+.card {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.card-header {
+    border-radius: 12px 12px 0 0 !important;
+    border-bottom: none;
+    padding: 1.25rem 1.5rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.suggestions-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 3rem 2rem;
+    margin-bottom: 2rem;
+}
+
+.suggestions-header h1 {
+    color: white;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.suggestions-header p {
+    color: rgba(255,255,255,0.9);
+}
+
+.suggestion-icon {
+    opacity: 0.2;
+}
+
+.quality-stats {
+    background: rgba(255,255,255,0.1);
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* Modern button styles */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Document stats styling */
+.document-stats small {
+    font-size: 0.8rem;
+}
+
+/* Improved spacing */
+.mb-5 {
+    margin-bottom: 3rem !important;
+}
+</style>
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 35px;
+    width: 2px;
+    height: 20px;
+    background: #dee2e6;
+}
+
+.step-number .badge {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.common-clause {
+    padding: 4px 0;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.common-clause:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item {
+    background: #f8f9fa;
+}
+
+.clause-text {
+    font-family: 'Georgia', serif;
+    line-height: 1.6;
+}
+
+.empty-state {
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.circular-progress {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.inner-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.score-text {
+    font-weight: bold;
+    font-size: 14px;
+    color: #333;
+}
+
+.quality-score {
+    margin: 0 auto;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}Document Clauses - {{ document.filename }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12">
+        <!-- Header -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-0">
+                            <i class="fas fa-file-contract me-2"></i>
+                            Document Clauses: {{ document.filename }}
+                        </h4>
+                        <small>{{ clauses|length }} clauses found</small>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('search') }}" class="btn btn-light btn-sm">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Search
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clause Summary -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-pie me-2"></i>
+                            Clause Summary
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for clause_type, type_clauses in clauses_by_type.items() %}
+                            <div class="col-md-3 mb-3">
+                                <div class="text-center p-3 border rounded">
+                                    <h6 class="text-primary mb-1">{{ clause_type.title() }}</h6>
+                                    <span class="badge bg-primary fs-6">{{ type_clauses|length }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-tabs mb-3" id="clauseTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="all-clauses-tab" data-bs-toggle="tab" 
+                        data-bs-target="#all-clauses" type="button" role="tab">
+                    <i class="fas fa-list me-1"></i>All Clauses
+                </button>
+            </li>
+            {% for clause_type in clauses_by_type.keys() %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="{{ clause_type }}-tab" data-bs-toggle="tab" 
+                        data-bs-target="#{{ clause_type }}-clauses" type="button" role="tab">
+                    <i class="fas fa-tag me-1"></i>{{ clause_type.title() }} ({{ clauses_by_type[clause_type]|length }})
+                </button>
+            </li>
+            {% endfor %}
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="clauseTabContent">
+            <!-- All Clauses Tab -->
+            <div class="tab-pane fade show active" id="all-clauses" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">All Clauses ({{ clauses|length }})</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if clauses %}
+                            {% for clause in clauses %}
+                            <div class="clause-item mb-4 p-3 border-start border-primary border-3">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="text-primary mb-0">
+                                        <i class="fas fa-paragraph me-1"></i>
+                                        Clause {{ clause.number }}
+                                        <span class="badge bg-secondary ms-2">{{ clause.type }}</span>
+                                    </h6>
+                                    <small class="text-muted">Position: {{ clause.position }}</small>
+                                </div>
+                                <div class="clause-content p-3 bg-light rounded">
+                                    <p class="mb-0">{{ clause.content }}</p>
+                                </div>
+                                <div class="clause-actions mt-2">
+                                    <button class="btn btn-sm btn-outline-primary copy-clause" 
+                                            data-clause="{{ clause.content }}" title="Copy clause text">
+                                        <i class="fas fa-copy me-1"></i>Copy
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-info highlight-clause" 
+                                            data-position="{{ clause.position }}" title="Highlight in document">
+                                        <i class="fas fa-highlighter me-1"></i>Highlight
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                No clauses were found in this document.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Type-specific Tabs -->
+            {% for clause_type, type_clauses in clauses_by_type.items() %}
+            <div class="tab-pane fade" id="{{ clause_type }}-clauses" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ clause_type.title() }} Clauses ({{ type_clauses|length }})</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for clause in type_clauses %}
+                        <div class="clause-item mb-4 p-3 border-start border-info border-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="text-info mb-0">
+                                    <i class="fas fa-paragraph me-1"></i>
+                                    Clause {{ clause.number }}
+                                </h6>
+                                <small class="text-muted">Position: {{ clause.position }}</small>
+                            </div>
+                            <div class="clause-content p-3 bg-light rounded">
+                                <p class="mb-0">{{ clause.content }}</p>
+                            </div>
+                            <div class="clause-actions mt-2">
+                                <button class="btn btn-sm btn-outline-primary copy-clause" 
+                                        data-clause="{{ clause.content }}" title="Copy clause text">
+                                    <i class="fas fa-copy me-1"></i>Copy
+                                </button>
+                                <button class="btn btn-sm btn-outline-info highlight-clause" 
+                                        data-position="{{ clause.position }}" title="Highlight in document">
+                                    <i class="fas fa-highlighter me-1"></i>Highlight
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Export Options -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-download me-2"></i>
+                    Export Clauses
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <button class="btn btn-success me-2" id="exportJson">
+                            <i class="fas fa-file-code me-1"></i>Export as JSON
+                        </button>
+                        <button class="btn btn-info me-2" id="exportText">
+                            <i class="fas fa-file-text me-1"></i>Export as Text
+                        </button>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <button class="btn btn-outline-primary" id="printClauses">
+                            <i class="fas fa-print me-1"></i>Print Clauses
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success/Error Messages -->
+<div id="messageContainer"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Copy clause functionality
+    document.querySelectorAll('.copy-clause').forEach(button => {
+        button.addEventListener('click', function() {
+            const clauseText = this.dataset.clause;
+            navigator.clipboard.writeText(clauseText).then(() => {
+                showMessage('Clause copied to clipboard!', 'success');
+                this.innerHTML = '<i class="fas fa-check me-1"></i>Copied!';
+                this.classList.remove('btn-outline-primary');
+                this.classList.add('btn-success');
+                
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-copy me-1"></i>Copy';
+                    this.classList.remove('btn-success');
+                    this.classList.add('btn-outline-primary');
+                }, 2000);
+            });
+        });
+    });
+    
+    // Export as JSON
+    document.getElementById('exportJson').addEventListener('click', function() {
+        // eslint-disable-next-line
+        const clausesData = {{ clauses | tojson | safe }};
+        const blob = new Blob([JSON.stringify(clausesData, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '{{ document.filename }}_clauses.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        showMessage('Clauses exported as JSON!', 'success');
+    });
+    
+    // Export as Text
+    document.getElementById('exportText').addEventListener('click', function() {
+        // eslint-disable-next-line
+        const clausesData = {{ clauses | tojson | safe }};
+        let textContent = 'DOCUMENT CLAUSES: {{ document.filename }}\n';
+        textContent += '='.repeat(50) + '\n\n';
+        
+        clausesData.forEach(clause => {
+            textContent += `CLAUSE ${clause.number} (${clause.type})\n`;
+            textContent += '-'.repeat(30) + '\n';
+            textContent += `${clause.content}\n\n`;
+        });
+        
+        const textBlob = new Blob([textContent], {type: 'text/plain'});
+        const textUrl = URL.createObjectURL(textBlob);
+        const a = document.createElement('a');
+        a.href = textUrl;
+        a.download = '{{ document.filename }}_clauses.txt';
+        a.click();
+        URL.revokeObjectURL(textUrl);
+        showMessage('Clauses exported as text!', 'success');
+    });
+    
+    // Print clauses
+    document.getElementById('printClauses').addEventListener('click', function() {
+        window.print();
+    });
+    
+    // Highlight clause (placeholder functionality)
+    document.querySelectorAll('.highlight-clause').forEach(button => {
+        button.addEventListener('click', function() {
+            showMessage('Highlight functionality would scroll to clause position in full document view.', 'info');
+        });
+    });
+    
+    function showMessage(message, type) {
+        const messageContainer = document.getElementById('messageContainer');
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertDiv.style.top = '20px';
+        alertDiv.style.right = '20px';
+        alertDiv.style.zIndex = '9999';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        messageContainer.appendChild(alertDiv);
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 3000);
+    }
+});
+</script>
+{% endblock %}

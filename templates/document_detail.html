@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}{{ document.filename }} - Document Details{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-file-pdf me-2"></i>{{ document.filename }}</h2>
+    <div>
+        <a href="{{ url_for('documents') }}" class="btn btn-secondary me-2">
+            <i class="fas fa-arrow-left me-1"></i>Back to Documents
+        </a>
+        <a href="{{ url_for('search') }}" class="btn btn-primary">
+            <i class="fas fa-search me-1"></i>Search Documents
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Column: Analysis Results -->
+    <div class="col-lg-8">
+        <!-- Important Dates -->
+        {% if document.dates.dates %}
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Important Dates</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for date in document.dates.dates %}
+                    <div class="col-md-6 mb-3">
+                        <div class="border-start border-warning border-3 ps-3">
+                            <h6 class="text-primary">{{ date.significance }}</h6>
+                            <p class="mb-1"><strong>{{ date.date }}</strong></p>
+                            <small class="text-muted">{{ date.context }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Parties Information -->
+        {% if document.parties.lessor or document.parties.lessee %}
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-users me-2"></i>Parties Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Lessor -->
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-success"><i class="fas fa-user-tie me-1"></i>Lessor (Landlord/Owner)</h6>
+                        {% if document.parties.lessor %}
+                            {% for lessor in document.parties.lessor %}
+                            <div class="border p-3 rounded mb-2">
+                                <h6 class="mb-2">{{ lessor.name }}</h6>
+                                {% if lessor.address %}
+                                    <p class="mb-1"><i class="fas fa-map-marker-alt me-1"></i>{{ lessor.address }}</p>
+                                {% endif %}
+                                {% if lessor.details %}
+                                    <small class="text-muted">{{ lessor.details }}</small>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted">No lessor information found.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Lessee -->
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-info"><i class="fas fa-user me-1"></i>Lessee (Tenant/Renter)</h6>
+                        {% if document.parties.lessee %}
+                            {% for lessee in document.parties.lessee %}
+                            <div class="border p-3 rounded mb-2">
+                                <h6 class="mb-2">{{ lessee.name }}</h6>
+                                {% if lessee.address %}
+                                    <p class="mb-1"><i class="fas fa-map-marker-alt me-1"></i>{{ lessee.address }}</p>
+                                {% endif %}
+                                {% if lessee.details %}
+                                    <small class="text-muted">{{ lessee.details }}</small>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted">No lessee information found.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Key Terms -->
+        {% if document.key_terms %}
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-file-contract me-2"></i>Key Terms & Conditions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Financial Terms -->
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-primary">Financial Information</h6>
+                        {% if document.key_terms.rent %}
+                        <div class="mb-2">
+                            <strong>Rent:</strong> {{ document.key_terms.rent.amount }} ({{ document.key_terms.rent.frequency }})
+                            {% if document.key_terms.rent.details %}
+                                <br><small class="text-muted">{{ document.key_terms.rent.details }}</small>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        {% if document.key_terms.deposit %}
+                        <div class="mb-2">
+                            <strong>Security Deposit:</strong> {{ document.key_terms.deposit.amount }}
+                            {% if document.key_terms.deposit.details %}
+                                <br><small class="text-muted">{{ document.key_terms.deposit.details }}</small>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Duration & Property -->
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-primary">Duration & Property</h6>
+                        {% if document.key_terms.duration %}
+                        <div class="mb-2">
+                            <strong>Duration:</strong> {{ document.key_terms.duration.period }}
+                            {% if document.key_terms.duration.details %}
+                                <br><small class="text-muted">{{ document.key_terms.duration.details }}</small>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        {% if document.key_terms.property %}
+                        <div class="mb-2">
+                            <strong>Property:</strong> {{ document.key_terms.property.address }}
+                            {% if document.key_terms.property.description %}
+                                <br><small class="text-muted">{{ document.key_terms.property.description }}</small>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Important Clauses -->
+                <div class="mt-3">
+                    <h6 class="text-primary">Important Clauses</h6>
+                    {% if document.numbered_bullet_clauses and document.numbered_bullet_clauses|length > 0 %}
+                    <div class="border rounded p-3 bg-light text-dark" style="height: 400px; overflow-y: auto; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        {% for clause in document.numbered_bullet_clauses %}
+                        <div class="mb-3 p-3 bg-white rounded border-start border-primary border-3" style="border-left-width: 4px !important;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="text-primary mb-0 fw-bold">Clause {{ clause.number }}</h6>
+                                <span class="badge bg-secondary">{{ clause.word_count }} words</span>
+                            </div>
+                            <p class="mb-0 text-dark" style="line-height: 1.6; font-size: 0.95em;">{{ clause.content }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="border rounded p-4 bg-light text-muted text-center" style="height: 200px; display: flex; align-items: center; justify-content: center;">
+                        <div>
+                            <i class="fas fa-list-ol fa-2x mb-3 text-muted"></i>
+                            <p class="mb-2"><strong>No numbered clauses found</strong></p>
+                            <p class="mb-0" style="font-size: 0.9em;">Looking for sentences starting with numbered bullet points (1., 2., etc.) with 10+ words</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+                {% endif %}
+    </div>    <!-- Right Column: Quick Info -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Document Info</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <small class="text-muted">File Name:</small><br>
+                    <strong>{{ document.filename }}</strong>
+                </div>
+                <div class="mb-2">
+                    <small class="text-muted">Word Count:</small><br>
+                    <strong>{{ document.word_count }}</strong>
+                </div>
+                <div class="mb-2">
+                    <small class="text-muted">Upload Time:</small><br>
+                    <strong>{{ document.upload_time[:19] }}</strong>
+                </div>
+                <div class="mb-2">
+                    <small class="text-muted">Important Clauses Found:</small><br>
+                    <strong>{{ document.numbered_bullet_clauses|length if document.numbered_bullet_clauses else 0 }}</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Named Entities -->
+        {% if document.entities %}
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-tags me-2"></i>Named Entities</h6>
+            </div>
+            <div class="card-body">
+                {% set entity_types = document.entities|groupby('label') %}
+                {% for label, entities in entity_types %}
+                <div class="mb-3">
+                    <h6 class="text-muted">{{ label }}</h6>
+                    {% for entity in entities[:5] %}
+                        <span class="badge bg-secondary me-1 mb-1">{{ entity.text }}</span>
+                    {% endfor %}
+                    {% if entities|length > 5 %}
+                        <span class="badge bg-light text-dark">+{{ entities|length - 5 }} more</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

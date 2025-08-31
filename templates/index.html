@@ -1,0 +1,641 @@
+{% extends "base.html" %}
+
+{% block title %}SafeLeaseX - Smart Document Analysis{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <!-- Hero Section -->
+        <div class="hero-section text-center mb-5">
+            <div class="hero-animation">
+                <i class="fas fa-gavel fa-4x text-primary mb-4"></i>
+            </div>
+            <h1 class="display-4 text-primary fw-bold mb-3">
+                Legal Document Analyzer
+            </h1>
+            <p class="lead text-muted mb-4">
+                Transform your legal documents with AI-powered analysis. Extract dates, parties, key terms, and search with intelligent insights for comprehensive document review.
+            </p>
+            <div class="hero-stats row text-center mb-4">
+                <div class="col-md-4">
+                    <div class="stat-item ai-analysis-card">
+                        <div class="analysis-icon-wrapper mb-3">
+                            <i class="fas fa-robot fa-3x text-primary"></i>
+                        </div>
+                        <h5 class="text-primary fw-bold">AI-Powered Analysis</h5>
+                        <p class="text-muted mb-3">Advanced natural language processing with machine learning algorithms</p>
+                        <div class="analysis-features">
+                            <div class="feature-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <span>Clause Extraction</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <span>Document Classification</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <span>Content Analysis</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-item search-analysis-card">
+                        <div class="analysis-icon-wrapper mb-3">
+                            <i class="fas fa-search fa-3x text-info"></i>
+                        </div>
+                        <h5 class="text-info fw-bold">Smart Search</h5>
+                        <p class="text-muted mb-3">Intelligent document search with contextual highlighting</p>
+                        <div class="analysis-features">
+                            <div class="feature-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <span>Real-time Search</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <span>Context Awareness</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <span>Term Navigation</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-item security-analysis-card">
+                        <div class="analysis-icon-wrapper mb-3">
+                            <i class="fas fa-shield-alt fa-3x text-success"></i>
+                        </div>
+                        <h5 class="text-success fw-bold">Secure Processing</h5>
+                        <p class="text-muted mb-3">Your documents are processed with enterprise-grade security</p>
+                        <div class="analysis-features">
+                            <div class="feature-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <span>Local Processing</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <span>Data Privacy</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <span>Encrypted Storage</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <div class="card shadow-lg border-0 upload-card">
+                <div class="card-header bg-primary text-white py-4">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h4 class="mb-0">
+                                <i class="fas fa-cloud-upload-alt me-2"></i>
+                                Upload Your Legal Documents
+                            </h4>
+                            <small class="opacity-75">Drop your PDF files here or click to browse</small>
+                        </div>
+                        <div class="col-auto">
+                            <div class="upload-indicator">
+                                <i class="fas fa-file-pdf fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="drop-zone" id="dropZone">
+                        <form id="uploadForm" enctype="multipart/form-data">
+                            <div class="drop-zone-content text-center py-5">
+                                <div class="drop-zone-icon mb-3">
+                                    <i class="fas fa-cloud-upload-alt fa-4x text-primary opacity-50"></i>
+                                </div>
+                                <h5 class="text-primary mb-3">Drop your PDF files here</h5>
+                                <p class="text-muted mb-4">or</p>
+                                <div class="file-input-wrapper">
+                                    <input type="file" class="form-control d-none" id="fileInput" name="files" accept=".pdf" multiple required>
+                                    <button type="button" class="btn btn-primary btn-lg" id="browseButton">
+                                        <i class="fas fa-folder-open me-2"></i>
+                                        Browse Files
+                                    </button>
+                                </div>
+                                <div class="file-info mt-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Support: PDF files • Max size: 16MB per file • Multiple files allowed
+                                    </small>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Selected Files Display -->
+                    <div id="selectedFiles" class="selected-files p-3 border-top" style="display: none;">
+                        <h6 class="mb-3">Selected Files:</h6>
+                        <div id="filesList"></div>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <button type="button" class="btn btn-outline-secondary" onclick="clearSelectedFiles()">
+                                <i class="fas fa-times me-1"></i>Clear All
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="uploadFiles()">
+                                <i class="fas fa-upload me-1"></i>Upload Documents
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Progress -->
+            <div id="uploadProgress" class="upload-progress mt-4" style="display: none;">
+                <div class="card border-primary">
+                    <div class="card-body text-center">
+                        <div class="spinner-border text-primary mb-3" role="status">
+                            <span class="visually-hidden">Processing...</span>
+                        </div>
+                        <h6 class="text-primary">Processing Documents</h6>
+                        <p class="text-muted mb-3">Analyzing your documents with AI...</p>
+                        <div class="progress mb-3">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <small class="text-muted">Extracting text...</small>
+                            </div>
+                            <div class="col-4">
+                                <small class="text-muted">AI analysis...</small>
+                            </div>
+                            <div class="col-4">
+                                <small class="text-muted">Finalizing...</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Results -->
+            <div id="uploadResults" class="upload-results mt-4"></div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="features-section mt-5">
+            <h3 class="text-center mb-5 text-primary">
+                <i class="fas fa-star me-2"></i>
+                Key Features
+            </h3>
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-calendar-alt fa-3x text-danger"></i>
+                            </div>
+                            <h5 class="card-title text-primary">Important Dates</h5>
+                            <p class="card-text text-muted">
+                                Automatically extract and categorize crucial dates like agreement dates, 
+                                commencement dates, and expiry dates with AI precision.
+                            </p>
+                            <div class="feature-tags">
+                                <span class="badge bg-light text-dark me-1">Agreement Dates</span>
+                                <span class="badge bg-light text-dark">Timeline Analysis</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-users fa-3x text-success"></i>
+                            </div>
+                            <h5 class="card-title text-primary">Parties Information</h5>
+                            <p class="card-text text-muted">
+                                Identify lessors, lessees, and other parties with their contact details, 
+                                addresses, and roles in the legal agreement.
+                            </p>
+                            <div class="feature-tags">
+                                <span class="badge bg-light text-dark me-1">Lessor/Lessee</span>
+                                <span class="badge bg-light text-dark">Contact Details</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-search-plus fa-3x text-info"></i>
+                            </div>
+                            <h5 class="card-title text-primary">Smart Search</h5>
+                            <p class="card-text text-muted">
+                                Search through documents with intelligent highlighting, context awareness, 
+                                and real-time results as you type.
+                            </p>
+                            <div class="feature-tags">
+                                <span class="badge bg-light text-dark me-1">Live Search</span>
+                                <span class="badge bg-light text-dark">Highlighting</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-dollar-sign fa-3x text-warning"></i>
+                            </div>
+                            <h5 class="card-title text-primary">Financial Terms</h5>
+                            <p class="card-text text-muted">
+                                Extract rent amounts, security deposits, payment schedules, 
+                                and other financial information automatically.
+                            </p>
+                            <div class="feature-tags">
+                                <span class="badge bg-light text-dark me-1">Rent Analysis</span>
+                                <span class="badge bg-light text-dark">Deposits</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-map-marker-alt fa-3x text-purple"></i>
+                            </div>
+                            <h5 class="card-title text-primary">Property Details</h5>
+                            <p class="card-text text-muted">
+                                Identify property addresses, descriptions, and location information 
+                                with advanced clause analysis technology.
+                            </p>
+                            <div class="feature-tags">
+                                <span class="badge bg-light text-dark me-1">Addresses</span>
+                                <span class="badge bg-light text-dark">Locations</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-download fa-3x text-secondary"></i>
+                            </div>
+                            <h5 class="card-title text-primary">Export & Share</h5>
+                            <p class="card-text text-muted">
+                                Export analysis results, copy text snippets to clipboard, 
+                                and share findings with easy-to-use tools.
+                            </p>
+                            <div class="feature-tags">
+                                <span class="badge bg-light text-dark me-1">Export Results</span>
+                                <span class="badge bg-light text-dark">Copy Text</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let selectedFiles = [];
+let isUploading = false;
+
+// Initialize drag and drop
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Page loaded, initializing file handlers...');
+    initializeDragAndDrop();
+    initializeFileInput();
+    
+    // Test that the file input exists
+    const fileInput = document.getElementById('fileInput');
+    if (fileInput) {
+        console.log('File input found successfully');
+    } else {
+        console.error('File input not found!');
+    }
+});
+
+function initializeDragAndDrop() {
+    const dropZone = document.getElementById('dropZone');
+    
+    if (!dropZone) {
+        console.error('Drop zone not found!');
+        return;
+    }
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+    });
+
+    dropZone.addEventListener('drop', handleDrop, false);
+    
+    // Add click handler to drop zone as well
+    dropZone.addEventListener('click', function(e) {
+        if (e.target === dropZone || e.target.closest('.drop-zone-content')) {
+            document.getElementById('fileInput').click();
+        }
+    });
+}
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+function highlight(e) {
+    document.getElementById('dropZone').classList.add('drag-over');
+}
+
+function unhighlight(e) {
+    document.getElementById('dropZone').classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    handleFiles(files);
+}
+
+function initializeFileInput() {
+    const fileInput = document.getElementById('fileInput');
+    
+    if (!fileInput) {
+        console.error('File input element not found!');
+        return;
+    }
+    
+    console.log('Setting up file input event listener...');
+    
+    fileInput.addEventListener('change', function(e) {
+        console.log('File input changed, files:', e.target.files.length);
+        handleFiles(e.target.files);
+    });
+    
+    // Also add direct click handler to button
+    const browseButton = document.getElementById('browseButton');
+    if (browseButton) {
+        console.log('Browse button found, adding click handler');
+        browseButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Browse button clicked');
+            fileInput.click();
+        });
+    } else {
+        console.error('Browse button not found!');
+    }
+}
+
+function handleFiles(files) {
+    selectedFiles = [];
+    Array.from(files).forEach(file => {
+        if (file.type === 'application/pdf') {
+            selectedFiles.push(file);
+        }
+    });
+    
+    if (selectedFiles.length > 0) {
+        displaySelectedFiles();
+    } else {
+        alert('Please select valid PDF files only.');
+    }
+}
+
+function displaySelectedFiles() {
+    const selectedFilesDiv = document.getElementById('selectedFiles');
+    const filesList = document.getElementById('filesList');
+    
+    selectedFilesDiv.style.display = 'block';
+    filesList.innerHTML = '';
+    
+    selectedFiles.forEach((file, index) => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item d-flex align-items-center justify-content-between p-2 bg-light rounded mb-2';
+        fileItem.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas fa-file-pdf text-danger me-2"></i>
+                <div>
+                    <div class="fw-medium">${file.name}</div>
+                    <small class="text-muted">${formatFileSize(file.size)}</small>
+                </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile(${index})">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        filesList.appendChild(fileItem);
+    });
+}
+
+function removeFile(index) {
+    selectedFiles.splice(index, 1);
+    if (selectedFiles.length > 0) {
+        displaySelectedFiles();
+    } else {
+        document.getElementById('selectedFiles').style.display = 'none';
+    }
+}
+
+function clearSelectedFiles() {
+    selectedFiles = [];
+    document.getElementById('selectedFiles').style.display = 'none';
+    document.getElementById('fileInput').value = '';
+    
+    // Reset the browse button
+    const button = document.getElementById('browseButton');
+    if (button) {
+        button.innerHTML = '<i class="fas fa-folder-open me-2"></i>Browse Files';
+        button.classList.remove('btn-success');
+        button.classList.add('btn-primary');
+    }
+}
+
+function uploadFiles() {
+    if (selectedFiles.length === 0) {
+        alert('Please select files to upload.');
+        return;
+    }
+    
+    if (isUploading) {
+        return;
+    }
+    
+    isUploading = true;
+    
+    const formData = new FormData();
+    selectedFiles.forEach(file => {
+        formData.append('files', file);
+    });
+    
+    // Show progress
+    document.getElementById('uploadProgress').style.display = 'block';
+    
+    fetch('/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        isUploading = false;
+        document.getElementById('uploadProgress').style.display = 'none';
+        
+        if (data.success) {
+            displayUploadResults(data);
+            clearSelectedFiles();
+        } else {
+            alert('Error uploading files: ' + data.error);
+        }
+    })
+    .catch(error => {
+        isUploading = false;
+        document.getElementById('uploadProgress').style.display = 'none';
+        console.error('Error:', error);
+        alert('An error occurred while uploading files.');
+    });
+}
+
+function displayUploadResults(data) {
+    const resultsDiv = document.getElementById('uploadResults');
+    
+    if (data.success) {
+        let resultsHTML = `
+            <div class="alert alert-success">
+                <h5><i class="fas fa-check-circle me-2"></i>Upload Successful!</h5>
+                <p>Successfully processed <strong>${data.processed_count}</strong> document(s). 
+                You now have <strong>${data.total}</strong> total document(s) analyzed.</p>
+        `;
+        
+        // Show warnings if any
+        if (data.warnings && data.warnings.length > 0) {
+            resultsHTML += `
+                <div class="mt-3">
+                    <small class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>Warnings:</small>
+                    <ul class="mb-0 mt-1">
+                        ${data.warnings.map(warning => `<li><small>${warning}</small></li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+        
+        // Show processed files summary
+        if (data.files && data.files.length > 0) {
+            resultsHTML += `
+                <div class="mt-3">
+                    <h6 class="mb-2">Processed Files:</h6>
+                    <div class="row">
+            `;
+            
+            data.files.forEach((file, index) => {
+                resultsHTML += `
+                    <div class="col-md-6 mb-2">
+                        <div class="card">
+                            <div class="card-body p-3">
+                                <h6 class="card-title mb-1">
+                                    <i class="fas fa-file-pdf text-danger me-1"></i>${file.filename}
+                                </h6>
+                                <small class="text-muted">
+                                    ${file.word_count.toLocaleString()} words | 
+                                    ${file.clause_summary.total_clauses} clauses found
+                                </small>
+                                ${file.clause_summary.clause_types.length > 0 ? `
+                                    <div class="mt-2">
+                                        ${file.clause_summary.clause_types.slice(0, 5).map(type => 
+                                            `<span class="badge bg-primary-subtle me-1">${type}</span>`
+                                        ).join('')}
+                                    </div>
+                                ` : ''}
+                                <div class="mt-2">
+                                    <a href="/document/${index}/clauses" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-list-ol me-1"></i>View Clauses
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultsHTML += `
+                    </div>
+                </div>
+            `;
+        }
+        
+        resultsHTML += `
+                <div class="mt-3">
+                    <a href="/documents" class="btn btn-primary me-2">
+                        <i class="fas fa-file-alt me-1"></i>View Analysis Results
+                    </a>
+                    <a href="/search" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-search me-1"></i>Search Documents
+                    </a>
+                    <a href="/agreement-suggestions" class="btn btn-outline-success me-2">
+                        <i class="fas fa-lightbulb me-1"></i>Improve Agreement
+                    </a>
+                    <button class="btn btn-outline-secondary" onclick="clearUploadResults()">
+                        <i class="fas fa-times me-1"></i>Clear Results
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        resultsDiv.innerHTML = resultsHTML;
+    } else {
+        resultsDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <h5><i class="fas fa-exclamation-circle me-2"></i>Upload Failed!</h5>
+                <p>${data.error}</p>
+                ${data.details && data.details.length > 0 ? `
+                    <ul class="mb-0 mt-2">
+                        ${data.details.map(detail => `<li>${detail}</li>`).join('')}
+                    </ul>
+                ` : ''}
+                <div class="mt-3">
+                    <button class="btn btn-primary" onclick="clearUploadResults()">
+                        <i class="fas fa-retry me-1"></i>Try Again
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    resultsDiv.style.display = 'block';
+    
+    // Reset the browse button
+    const button = document.getElementById('browseButton');
+    if (button) {
+        button.innerHTML = '<i class="fas fa-folder-open me-2"></i>Browse Files';
+        button.classList.remove('btn-success');
+        button.classList.add('btn-primary');
+    }
+}
+
+function clearUploadResults() {
+    const resultsDiv = document.getElementById('uploadResults');
+    resultsDiv.style.display = 'none';
+    resultsDiv.innerHTML = '';
+}
+
+function formatFileSize(bytes) {
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    if (bytes === 0) return '0 Bytes';
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+}
+</script>
+{% endblock %}
